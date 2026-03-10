@@ -2,7 +2,7 @@
 
 Understand any technical infrastructure concept in 60 seconds — designed for non-technical investors.
 
-**GitHub:** https://github.com/jktrimercodeproject/techtranslator
+**GitHub:** https://github.com/jktrimercodeproject/Technical-Translator-vF
 
 ## Setup
 
@@ -16,7 +16,7 @@ Understand any technical infrastructure concept in 60 seconds — designed for n
 ### 2. Clone the Repo
 
 ```bash
-git clone https://github.com/jktrimercodeproject/techtranslator.git
+git clone https://github.com/jktrimercodeproject/Technical-Translator-vF.git
 cd techtranslator
 ```
 
