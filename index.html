@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechTranslator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FFFFFF;
+      --bg-section: #F8F9FA;
+      --text: #1A1A1A;
+      --text-muted: #6B7280;
+      --text-light: #9CA3AF;
+      --blue: #1565C0;
+      --blue-light: #E3F2FD;
+      --blue-mid: #42A5F5;
+      --green: #2E7D32;
+      --green-light: #E8F5E9;
+      --amber: #B45309;
+      --amber-light: #FEF3C7;
+      --red-text: #991B1B;
+      --red-bg: #FEF2F2;
+      --red-border: #FECACA;
+      --border: #E5E7EB;
+      --border-strong: #D1D5DB;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── APP SHELL ── */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ── HERO ── */
+    #hero {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; padding: 40px 20px 80px;
+      transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #hero.compact { flex: 0; padding: 24px 20px 0; border-bottom: 1px solid var(--border); }
+
+    #logo { font-size: 2.6rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text); margin-bottom: 10px; transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+    #hero.compact #logo { font-size: 1.4rem; margin-bottom: 4px; }
+    #logo span { color: var(--blue); }
+
+    #subtitle { font-size: 1.05rem; color: var(--text-muted); margin-bottom: 32px; text-align: center; transition: all 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+    #hero.compact #subtitle { font-size: 0.82rem; margin-bottom: 16px; }
+
+    /* ── SEARCH ── */
+    #search-wrapper { width: 100%; max-width: 640px; position: relative; }
+    #hero.compact #search-wrapper { max-width: 560px; }
+
+    #search-form {
+      display: flex; align-items: center; background: var(--bg);
+      border: 1.5px solid var(--border-strong); border-radius: 50px;
+      box-shadow: var(--shadow-md); overflow: hidden;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    #search-form:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(21,101,192,0.12), var(--shadow-md); }
+
+    #search-input { flex: 1; border: none; outline: none; padding: 14px 20px; font-size: 1rem; font-family: var(--font); color: var(--text); background: transparent; }
+    #hero.compact #search-input { padding: 10px 18px; font-size: 0.95rem; }
+
+    #clear-btn {
+      background: none; border: none; color: var(--text-light); font-size: 1rem;
+      width: 28px; height: 28px; min-width: 28px; border-radius: 50%; cursor: pointer;
+      display: none; align-items: center; justify-content: center; margin-right: 2px;
+      transition: color 0.15s, background 0.15s; line-height: 1;
+    }
+    #clear-btn:hover { color: var(--text); background: var(--bg-section); }
+    #clear-btn.visible { display: flex; }
+
+    #search-btn {
+      background: var(--blue); border: none; color: white; width: 44px; height: 44px; min-width: 44px;
+      border-radius: 50%; margin-right: 5px; cursor: pointer; font-size: 1.15rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+    }
+    #hero.compact #search-btn { width: 36px; height: 36px; min-width: 36px; font-size: 1rem; }
+    #search-btn:hover { background: #0D47A1; transform: scale(1.06); }
+    #search-btn:active { transform: scale(0.97); }
+
+    /* ── CHIPS ── */
+    #chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; justify-content: center; max-width: 640px; }
+    #hero.compact #chips { margin-top: 10px; margin-bottom: 12px; }
+    .chip { background: var(--bg-section); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+    .chip:hover { background: var(--blue-light); border-color: var(--blue-mid); color: var(--blue); }
+
+    /* ── RESULTS LAYOUT ── */
+    #results-area { display: none; flex: 1; }
+    #results-area.visible { display: flex; }
+    #results-inner { display: flex; max-width: 1280px; margin: 0 auto; width: 100%; padding: 32px 24px 80px; gap: 28px; align-items: flex-start; }
+
+    /* ── LEFT PANEL ── */
+    #left-panel { flex: 1; min-width: 0; animation: fadeInUp 0.4s ease both; }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── REGEN BAR ── */
+    #regen-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+    #query-label { font-size: 1.35rem; font-weight: 600; color: var(--text); flex: 1; }
+    #regen-btn {
+      display: flex; align-items: center; gap: 5px; background: none;
+      border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+      padding: 5px 12px; font-size: 0.82rem; color: var(--text-muted);
+      cursor: pointer; font-family: var(--font); transition: all 0.18s;
+    }
+    #regen-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+    /* ── SECTION CHROME ── */
+    .section { margin-bottom: 28px; }
+    .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .section-header::before { content: ''; display: block; width: 3px; height: 18px; background: var(--blue); border-radius: 2px; flex-shrink: 0; }
+    .section-header h2 { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--blue); }
+
+    /* ── 1. SIMPLE EXPLANATION ── */
+    #simple-explanation-text { font-size: 1.08rem; line-height: 1.8; color: var(--text); background: var(--blue-light); border-radius: var(--radius); padding: 20px 22px; border-left: 4px solid var(--blue); }
+
+    /* ── 2. ELI12 ── */
+    #eli12-block {
+      background: #FFF8E1; border-left: 4px solid #FFB300;
+      border-radius: var(--radius); padding: 18px 20px;
+      font-size: 1rem; line-height: 1.75; color: #4A3800;
+    }
+    #eli12-header { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #92620A; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+    /* ── 3. DIAGRAM ── */
+    #diagram-container { background: var(--bg-section); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow: hidden; min-height: 80px; }
+
+    /* ── 4. ANALOGIES ── */
+    .analogy-item { display: flex; gap: 10px; padding: 12px 16px; border-left: 3px solid #FFB300; background: #FFFDF0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.65; }
+    .analogy-emoji { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── 5–7. PROSE BLOCKS ── */
+    .prose-block { font-size: 0.95rem; line-height: 1.75; color: var(--text); }
+    .timeline-block { font-size: 0.95rem; line-height: 1.75; color: var(--text); border-left: 3px solid var(--border-strong); padding-left: 16px; }
+
+    /* ── 8. VENDOR LANDSCAPE ── */
+    #tam-header { font-size: 0.82rem; color: var(--text-muted); background: var(--bg-section); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    #tam-header strong { color: var(--text); }
+
+    #vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+    .vendor-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-sm); background: var(--bg); }
+    .vendor-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .vendor-name { font-weight: 600; font-size: 0.95rem; }
+    .vendor-badge { display: inline-block; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 20px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .badge-incumbent { background: var(--blue-light); color: var(--blue); }
+    .badge-challenger { background: var(--green-light); color: var(--green); }
+    .vendor-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 10px; }
+    .vendor-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .vendor-stat { background: var(--bg-section); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-size: 0.75rem; color: var(--text-muted); }
+    .vendor-stat strong { color: var(--text); font-weight: 600; }
+
+    /* ── 9. SOFTWARE MARKET ANALOGY ── */
+    #sec-analogy .section-header::before { background: #6C3483; }
+    #sec-analogy .section-header h2 { color: #6C3483; }
+    #analogy-block { background: #F5F0FF; border: 1px solid #D8B4FE; border-radius: var(--radius); padding: 20px 22px; }
+    #analogy-market-name { font-size: 1.15rem; font-weight: 700; color: #4C1D95; margin-bottom: 6px; }
+    #analogy-why { font-size: 0.92rem; line-height: 1.7; color: #3B1F6E; margin-bottom: 16px; }
+    #analogy-similarities { margin-bottom: 18px; }
+    #analogy-similarities-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7C3AED; margin-bottom: 8px; }
+    .analogy-sim-item { display: flex; gap: 8px; font-size: 0.88rem; line-height: 1.6; color: #3B1F6E; margin-bottom: 6px; }
+    .analogy-sim-bullet { color: #7C3AED; font-weight: 700; flex-shrink: 0; }
+    #analogy-framework { border-top: 1px solid #D8B4FE; padding-top: 16px; }
+    #analogy-framework-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #7C3AED; margin-bottom: 12px; }
+    .framework-row { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #EDE9FE; align-items: flex-start; }
+    .framework-row:last-child { border-bottom: none; }
+    .framework-dim { font-size: 0.82rem; font-weight: 600; color: #4C1D95; width: 140px; flex-shrink: 0; padding-top: 1px; }
+    .framework-val { font-size: 0.88rem; line-height: 1.65; color: #3B1F6E; flex: 1; }
+    .sticky-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; border-radius: 4px; padding: 1px 7px; margin-right: 6px; vertical-align: middle; }
+    .sticky-high { background: var(--green-light); color: var(--green); }
+    .sticky-medium { background: var(--amber-light); color: var(--amber); }
+    .sticky-low { background: var(--red-bg); color: var(--red-text); }
+
+    /* ── 10. QUESTIONS FOR MANAGEMENT ── */
+    #questions-list { display: flex; flex-direction: column; gap: 12px; }
+    .question-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .question-card-main { padding: 14px 16px 10px; }
+    .question-num-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+    .question-num { font-weight: 700; color: var(--blue); font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+    .question-text { font-size: 0.92rem; font-weight: 600; line-height: 1.55; color: var(--text); }
+    .question-why { font-size: 0.84rem; line-height: 1.6; color: var(--text-muted); padding: 0 16px 10px 36px; }
+    .question-redflag { font-size: 0.82rem; line-height: 1.6; color: var(--red-text); background: var(--red-bg); border-top: 1px solid var(--red-border); padding: 9px 16px 9px 36px; display: flex; gap: 6px; align-items: flex-start; }
+    .redflag-icon { flex-shrink: 0; font-size: 0.88rem; margin-top: 1px; }
+
+    /* ── 11. ADJACENT CATEGORIES ── */
+    #adjacent-flow { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+    .adj-group { display: flex; flex-direction: column; gap: 5px; }
+    .adj-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-light); text-align: center; margin-bottom: 2px; }
+    .adj-box { background: var(--bg-section); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 0.83rem; color: var(--text-muted); white-space: nowrap; }
+    .adj-vendors { font-size: 0.72rem; color: var(--text-light); text-align: center; padding: 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    .adj-center-box { background: var(--blue-light); border: 1.5px solid var(--blue-mid); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 0.88rem; font-weight: 600; color: var(--blue); white-space: nowrap; text-align: center; }
+    .adj-arrow { font-size: 1.2rem; color: var(--border-strong); flex-shrink: 0; margin-top: 20px; }
+
+    /* ── RIGHT SIDEBAR ── */
+    #right-sidebar {
+      width: 280px; flex-shrink: 0; position: sticky; top: 24px;
+      max-height: calc(100vh - 120px); overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+      animation: fadeInUp 0.4s 0.1s ease both;
+    }
+    #right-sidebar::-webkit-scrollbar { width: 4px; }
+    #right-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    #sidebar-header { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--blue); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    #sidebar-header::before { content: ''; display: block; width: 3px; height: 14px; background: #FF1744; border-radius: 2px; }
+    .video-card { border: 1px solid var(--border); border-left: 3px solid #FF1744; border-radius: var(--radius-sm); padding: 13px 14px; margin-bottom: 12px; background: var(--bg); box-shadow: var(--shadow-sm); transition: box-shadow 0.18s; }
+    .video-card:hover { box-shadow: var(--shadow-md); }
+    .video-title { font-size: 0.88rem; font-weight: 600; color: var(--text); line-height: 1.45; margin-bottom: 4px; }
+    .video-channel { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; }
+    .video-link { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 500; color: #FF1744; text-decoration: none; transition: opacity 0.15s; }
+    .video-link:hover { opacity: 0.75; }
+
+    /* ── SKELETON LOADER ── */
+    #skeleton-area { display: none; flex: 1; }
+    #skeleton-area.visible { display: flex; }
+    #skeleton-inner { display: flex; max-width: 1280px; margin: 0 auto; width: 100%; padding: 32px 24px 80px; gap: 28px; align-items: flex-start; }
+    #skeleton-left { flex: 1; min-width: 0; }
+    #skeleton-right { width: 280px; flex-shrink: 0; }
+    .sk { background: linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: var(--radius-sm); }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .sk-title  { height: 28px; width: 55%; margin-bottom: 22px; border-radius: 6px; }
+    .sk-hero   { height: 80px; width: 100%; margin-bottom: 20px; border-radius: var(--radius); }
+    .sk-warm   { height: 72px; width: 100%; margin-bottom: 20px; border-radius: var(--radius); }
+    .sk-block  { height: 160px; width: 100%; margin-bottom: 20px; border-radius: var(--radius); }
+    .sk-block2 { height: 90px; width: 100%; margin-bottom: 20px; border-radius: var(--radius); }
+    .sk-purple { height: 200px; width: 100%; margin-bottom: 20px; border-radius: var(--radius); }
+    .sk-card   { height: 100px; width: 100%; margin-bottom: 12px; border-radius: var(--radius); }
+    #skeleton-msg { text-align: center; color: var(--text-muted); font-size: 0.88rem; margin-top: 8px; margin-bottom: 24px; letter-spacing: 0.02em; }
+
+    /* ── ERROR ── */
+    #error-box { display: none; max-width: 560px; margin: 40px auto; padding: 20px 24px; border: 1px solid var(--red-border); background: var(--red-bg); border-radius: var(--radius); color: var(--red-text); font-size: 0.95rem; line-height: 1.6; }
+    #error-box.visible { display: block; }
+    #error-title { font-weight: 600; margin-bottom: 4px; }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; font-size: 0.75rem; color: var(--text-light); padding: 20px; border-top: 1px solid var(--border); }
+
+    @media (max-width: 860px) {
+      #results-inner, #skeleton-inner { flex-direction: column; padding: 20px 16px 60px; }
+      #right-sidebar { width: 100%; position: static; max-height: none; }
+      .framework-dim { width: 110px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HERO -->
+  <header id="hero">
+    <div id="logo">Tech<span>Translator</span></div>
+    <div id="subtitle">Understand any technical concept in 60 seconds.</div>
+    <div id="search-wrapper">
+      <form id="search-form" autocomplete="off">
+        <input id="search-input" type="text" placeholder="e.g. What does Snowflake do?" aria-label="Search technical concepts" spellcheck="false" />
+        <button id="clear-btn" type="button" aria-label="Clear search">&#10005;</button>
+        <button id="search-btn" type="submit" aria-label="Search">&#8594;</button>
+      </form>
+      <div id="chips">
+        <span class="chip" data-query="What is a data warehouse?">Data Warehouse</span>
+        <span class="chip" data-query="What does Snowflake do?">Snowflake</span>
+        <span class="chip" data-query="What is an API gateway?">API Gateway</span>
+        <span class="chip" data-query="What does Spectro Cloud do?">Spectro Cloud</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SKELETON -->
+  <div id="skeleton-area">
+    <div id="skeleton-inner">
+      <div id="skeleton-left">
+        <p id="skeleton-msg">Running deep analysis&hellip;</p>
+        <div class="sk sk-title"></div>
+        <div class="sk sk-hero"></div>
+        <div class="sk sk-warm"></div>
+        <div class="sk sk-block"></div>
+        <div class="sk sk-block2"></div>
+        <div class="sk sk-block2"></div>
+        <div class="sk sk-block"></div>
+        <div class="sk sk-purple"></div>
+        <div class="sk sk-block"></div>
+      </div>
+      <div id="skeleton-right">
+        <div class="sk sk-card"></div>
+        <div class="sk sk-card"></div>
+        <div class="sk sk-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-box">
+    <div id="error-title"></div>
+    <div id="error-body"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-area">
+    <div id="results-inner">
+
+      <div id="left-panel">
+        <div id="regen-bar">
+          <div id="query-label"></div>
+          <button id="regen-btn">&#8635; Regenerate</button>
+        </div>
+
+        <!-- 1. Simple Explanation -->
+        <div class="section" id="sec-simple">
+          <div class="section-header"><h2>Simple Explanation</h2></div>
+          <div id="simple-explanation-text"></div>
+        </div>
+
+        <!-- 2. Explain It Like I'm 12 -->
+        <div class="section" id="sec-eli12">
+          <div id="eli12-block">
+            <div id="eli12-header">🧒 Explain It Like I'm 12</div>
+            <div id="eli12-text"></div>
+          </div>
+        </div>
+
+        <!-- 3. How It Works -->
+        <div class="section" id="sec-diagram">
+          <div class="section-header"><h2>How It Works</h2></div>
+          <div id="diagram-container"></div>
+        </div>
+
+        <!-- 4. Analogies -->
+        <div class="section" id="sec-analogies">
+          <div class="section-header"><h2>Analogies</h2></div>
+          <div id="analogies-list"></div>
+        </div>
+
+        <!-- 5. Enterprise Context -->
+        <div class="section" id="sec-enterprise">
+          <div class="section-header"><h2>Enterprise Context</h2></div>
+          <div id="enterprise-text" class="prose-block"></div>
+        </div>
+
+        <!-- 6. End Users -->
+        <div class="section" id="sec-endusers">
+          <div class="section-header"><h2>End Users</h2></div>
+          <div id="endusers-text" class="prose-block"></div>
+        </div>
+
+        <!-- 7. Historical Context -->
+        <div class="section" id="sec-history">
+          <div class="section-header"><h2>Historical Context</h2></div>
+          <div id="history-text" class="timeline-block"></div>
+        </div>
+
+        <!-- 8. Vendor Landscape -->
+        <div class="section" id="sec-vendors">
+          <div class="section-header"><h2>Vendor Landscape</h2></div>
+          <div id="tam-header"><span>&#127758; Estimated category TAM:</span> <strong id="tam-text"></strong></div>
+          <div id="vendor-grid"></div>
+        </div>
+
+        <!-- 9. Software Market Analogy -->
+        <div class="section" id="sec-analogy">
+          <div class="section-header"><h2>Software Market Analogy</h2></div>
+          <div id="analogy-block">
+            <div id="analogy-market-name"></div>
+            <div id="analogy-why"></div>
+            <div id="analogy-similarities">
+              <div id="analogy-similarities-label">Structural similarities</div>
+              <div id="analogy-sim-list"></div>
+            </div>
+            <div id="analogy-framework">
+              <div id="analogy-framework-label">Investor framework</div>
+              <div id="analogy-framework-rows"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. Diligence Questions -->
+        <div class="section" id="sec-questions">
+          <div class="section-header"><h2>Diligence Questions</h2></div>
+          <div id="questions-list"></div>
+        </div>
+
+        <!-- 11. Adjacent Categories -->
+        <div class="section" id="sec-adjacent">
+          <div class="section-header"><h2>Adjacent Categories</h2></div>
+          <div id="adjacent-flow"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside id="right-sidebar">
+        <div id="sidebar-header">Video Explainers</div>
+        <div id="video-list"></div>
+      </aside>
+
+    </div>
+  </div>
+
+  <footer>Powered by Groq &middot; Built for investors who don&rsquo;t speak engineer</footer>
+</div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── CACHE v2 (invalidates any v1 entries) ──────────────────────────────────
+  const CACHE_KEY = 'tt_cache_v2';
+  const CACHE_MAX = 50;
+  // Wipe old cache key silently
+  try { localStorage.removeItem('tt_cache'); } catch (_) {}
+
+  function cacheGet(query) {
+    try {
+      const store = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+      const entry = store[query.toLowerCase().trim()];
+      return entry ? entry.data : null;
+    } catch { return null; }
+  }
+
+  function cacheSet(query, data) {
+    try {
+      const store = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+      const key = query.toLowerCase().trim();
+      const keys = Object.keys(store);
+      if (keys.length >= CACHE_MAX && !store[key]) {
+        const oldest = keys.sort((a, b) => store[a].ts - store[b].ts)[0];
+        delete store[oldest];
+      }
+      store[key] = { data, ts: Date.now() };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+    } catch (_) {}
+  }
+
+  // ── DOM REFS ───────────────────────────────────────────────────────────────
+  const hero         = document.getElementById('hero');
+  const searchForm   = document.getElementById('search-form');
+  const searchInput  = document.getElementById('search-input');
+  const clearBtn     = document.getElementById('clear-btn');
+  const skeletonArea = document.getElementById('skeleton-area');
+  const resultsArea  = document.getElementById('results-area');
+  const errorBox     = document.getElementById('error-box');
+  const errorTitle   = document.getElementById('error-title');
+  const errorBody    = document.getElementById('error-body');
+  const regenBtn     = document.getElementById('regen-btn');
+  const queryLabel   = document.getElementById('query-label');
+
+  const simpleText     = document.getElementById('simple-explanation-text');
+  const eli12Text      = document.getElementById('eli12-text');
+  const diagramCont    = document.getElementById('diagram-container');
+  const analogiesList  = document.getElementById('analogies-list');
+  const enterpriseText = document.getElementById('enterprise-text');
+  const endusersText   = document.getElementById('endusers-text');
+  const historyText    = document.getElementById('history-text');
+  const tamText        = document.getElementById('tam-text');
+  const vendorGrid     = document.getElementById('vendor-grid');
+  const analogyMarket  = document.getElementById('analogy-market-name');
+  const analogyWhy     = document.getElementById('analogy-why');
+  const analogySimList = document.getElementById('analogy-sim-list');
+  const analogyFwRows  = document.getElementById('analogy-framework-rows');
+  const questionsList  = document.getElementById('questions-list');
+  const adjacentFlow   = document.getElementById('adjacent-flow');
+  const videoList      = document.getElementById('video-list');
+
+  // ── STATE ──────────────────────────────────────────────────────────────────
+  let currentQuery = '';
+  let hasSearched  = false;
+
+  // ── CLEAR BUTTON ───────────────────────────────────────────────────────────
+  searchInput.addEventListener('input', () => {
+    clearBtn.classList.toggle('visible', searchInput.value.length > 0);
+  });
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.classList.remove('visible');
+    searchInput.focus();
+  });
+
+  // ── CHIPS ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const q = chip.dataset.query;
+      searchInput.value = q;
+      clearBtn.classList.add('visible');
+      doSearch(q, false);
+    });
+  });
+
+  // ── FORM SUBMIT ────────────────────────────────────────────────────────────
+  searchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const q = searchInput.value.trim();
+    if (q) doSearch(q, false);
+  });
+
+  regenBtn.addEventListener('click', () => {
+    if (currentQuery) doSearch(currentQuery, true);
+  });
+
+  // ── MAIN FLOW ──────────────────────────────────────────────────────────────
+  async function doSearch(query, skipCache) {
+    query = query.trim();
+    if (!query) return;
+    currentQuery = query;
+
+    if (!hasSearched) { hasSearched = true; hero.classList.add('compact'); }
+
+    if (typeof GROQ_API_KEY === 'undefined' || !GROQ_API_KEY || GROQ_API_KEY === 'PASTE_YOUR_KEY_HERE' || GROQ_API_KEY === 'YOUR_GROQ_API_KEY_HERE') {
+      showError('API key not configured', 'Create a <code>config.js</code> file with your Groq API key. See README for setup.');
+      return;
+    }
+
+    if (!skipCache) {
+      const cached = cacheGet(query);
+      if (cached) { renderResults(query, cached); return; }
+    }
+
+    showSkeleton();
+
+    let rawText;
+    try { rawText = await callGroq(query); }
+    catch (err) { showApiError(err); return; }
+
+    let parsed;
+    try {
+      const clean = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      showError('Unexpected response format', 'Got an unexpected response. Try rephrasing your query or click Regenerate.');
+      return;
+    }
+
+    cacheSet(query, parsed);
+    renderResults(query, parsed);
+  }
+
+  // ── API CALL ───────────────────────────────────────────────────────────────
+  async function callGroq(query) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + GROQ_API_KEY },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: buildMessages(query),
+        temperature: 0.7,
+        max_tokens: 8000
+      })
+    });
+    if (!res.ok) { const e = new Error(res.statusText); e.status = res.status; throw e; }
+    const json = await res.json();
+    const text = json?.choices?.[0]?.message?.content;
+    if (!text) throw new Error('Empty response from API');
+    return text;
+  }
+
+  // ── SYSTEM PROMPT ──────────────────────────────────────────────────────────
+  function buildMessages(query) {
+    const system = `You are a senior technology research analyst at a top-tier investment firm. Before answering, deeply analyze the technology or product in question. Understand exactly what it does at a mechanical level, who builds it, who buys it, and who competes with it. Your audience is a smart investor who is not technical. Your job is to make them understand this technology so well that they could hold a credible conversation with a CTO about it.
+
+Rules:
+1. Never use buzzwords or marketing language. If a company describes itself as "the leading cloud-native platform for X," ignore that framing and explain what the product actually does in plain English.
+2. Every factual claim should be as specific as possible. Use concrete numbers, company names, product names, and technical details — then explain them simply.
+3. When identifying competitors, think carefully about what this product ACTUALLY does at a technical level. Find companies whose products solve the same problem for the same buyer persona. Do not list tangentially related companies.
+4. For revenue and market share estimates, use your best knowledge. It is okay to say "estimated" but always give a number, not "significant" or "substantial."
+5. The diagram must show internal mechanics, not a generic three-box flowchart. Think Lego blocks that snap together to form the product.
+
+DILIGENCE QUESTIONS — BACKEND INSTRUCTIONS:
+Before generating questionsForManagement, internally identify the 3-5 core structural claims that would need to be true for this company or technology category to be a strong investment. These typically fall into categories like:
+- Switching cost depth (how painful is it to rip out?)
+- Data gravity / network effects (does usage compound the value?)
+- Unit economics trajectory (do margins improve or degrade at scale?)
+- TAM expansion mechanism (can the vendor grow the market, or just take share?)
+- Competitive convergence risk (are adjacent players building this in?)
+- Distribution advantage (does the go-to-market create durable access?)
+- Platform vs. point solution trajectory (is this consolidating or fragmenting?)
+
+Each question must directly test one of these structural claims. The question must be specific enough that a vague or deflecting answer is itself informative. Frame questions in the third person (about the company), not the second person — not "your revenue" but "the company's revenue."
+
+Do NOT generate generic questions like "What is the competitive moat?" or "How large is the TAM?" Every investor asks those. Generate questions that test the specific mechanism behind the moat or the specific assumption behind the TAM estimate. Each question must map to a named structural claim and include a concrete red flag — a specific answer that would be a warning sign.
+
+You must respond with ONLY a valid JSON object. No markdown fences, no preamble, no explanation — just the raw JSON starting with { and ending with }.
+
+Return exactly this JSON structure:
+
+{
+  "categoryName": "The canonical technology category name in 2-5 words. Used as the center node in the adjacent categories diagram.",
+  "simpleExplanation": "2-3 sentences. Plain English only. Zero buzzwords. Every sentence must contain a concrete, specific fact about what the product or technology actually does mechanically. Do not say 'manages cloud infrastructure' — say exactly what it does and how.",
+  "eli12": "2-3 sentences explaining this to a smart 12-year-old using a concrete real-world metaphor from school, sports, video games, or building things. Fun and memorable. No jargon.",
+  "diagramHTML": "HTML string with ONLY inline CSS showing internal mechanics as 4-6 discrete steps. Each block has a short bold label AND a one-line plain-English description. Colors: #E3F2FD blocks, #1565C0 label text, #F5F5F5 container. Flexbox layout, border-radius 8px, unicode arrows →. Wrap in a div with style='font-family:sans-serif'. No SVG, no canvas. Show HOW it works internally.",
+  "analogies": ["First analogy as a complete sentence", "Second analogy as a complete sentence"],
+  "enterpriseContext": "Who buys it (specific job title, budget line), what systems it connects to upstream and downstream, what it replaces, what teams did before this existed.",
+  "endUsers": "Actual humans who use this day-to-day. Specific job titles, daily workflow, exact pain point solved.",
+  "historicalContext": "How this problem was solved 5, 10, 20 years ago. What technology shifts made this category possible. Why this exists now.",
+  "tam": "Estimated TAM for this specific category with a dollar figure, year, and CAGR. Not the broader adjacent market.",
+  "vendorLandscape": [
+    {
+      "name": "Company or product name",
+      "type": "incumbent or challenger",
+      "description": "One sentence on their specific architectural approach or key differentiator.",
+      "revenue": "Estimated revenue from this specific category only (e.g., 'est. $2.1B in 2024'). Not total company revenue.",
+      "marketShare": "Estimated market share percentage in this specific category (e.g., '28%')"
+    }
+  ],
+  "softwareMarketAnalogy": {
+    "analogousMarket": "Name of a well-understood software market with similar structural dynamics.",
+    "whyComparison": "2-3 sentences explaining why this structural comparison is apt.",
+    "structuralSimilarities": ["Similarity 1", "Similarity 2", "Similarity 3"],
+    "investorFramework": {
+      "productStickiness": { "rating": "Low or Medium or High", "explanation": "One sentence on why, compared to the analogous market." },
+      "pointVsPlatform": "Where is this market in the point-solution-to-platform lifecycle versus where the analogous market was at the same stage.",
+      "beachheadPotential": "Can a vendor use this as a wedge into adjacent categories? What would that look like? What did analogous market leaders do?",
+      "marginProfile": "Gross margin profile for vendors in this category and why. Compared to the analogous market.",
+      "consolidationRisk": "Likely to consolidate or get absorbed? Most likely acquirer profile and rationale."
+    }
+  },
+  "questionsForManagement": [
+    {
+      "question": "A specific, precise, technically-grounded diligence question. Third person. Not generic.",
+      "whyItMatters": "One sentence on what the answer reveals about competitive position, moat, or business quality.",
+      "redFlag": "The specific answer that would be a warning sign. Be concrete — not 'a vague answer' but the actual content of the bad answer."
+    }
+  ],
+  "adjacentCategories": {
+    "upstream": [{ "name": "Category name", "vendors": ["Vendor 1", "Vendor 2"] }],
+    "downstream": [{ "name": "Category name", "vendors": ["Vendor 1", "Vendor 2"] }]
+  },
+  "youtubeVideos": [
+    {
+      "title": "Descriptive title of a real, well-known explainer video",
+      "channel": "Channel name (prefer: ByteByteGo, Fireship, IBM Technology, Alex The Analyst, NetworkChuck, TechWorld with Nana)",
+      "searchQuery": "optimized YouTube search query to find this specific video"
+    }
+  ]
+}
+
+Constraints: sort vendorLandscape by market share descending. Include 3-6 vendors — only direct competitors for the same buyer. Include 3-5 questionsForManagement, each testing a named structural claim. adjacentCategories should have 2-3 entries upstream and downstream with 2 vendor names each.`;
+
+    // Few-shot examples demonstrating the expected diligence question quality
+    const fewShotUser = `Show me examples of diligence questions at the right level of specificity for three companies: Snowflake, Spectro Cloud, and Datadog.`;
+
+    const fewShotAssistant = `Here are examples of the questionsForManagement array for three companies, demonstrating the required specificity:
+
+SNOWFLAKE — questionsForManagement:
+[
+  {
+    "question": "What fraction of Snowflake's compute revenue comes from workloads that depend on features unique to its architecture — cross-cloud data sharing, Snowpark, or Iceberg table management — versus standard SQL analytics that could run equivalently on Databricks Photon or BigQuery?",
+    "whyItMatters": "This separates commodity compute revenue, which is vulnerable to price competition, from structurally differentiated revenue tied to capabilities that require re-architecting to replicate elsewhere.",
+    "redFlag": "Management reframes the answer around total workload growth without distinguishing differentiated versus commodity workloads — meaning they either do not track it or do not like the ratio."
+  },
+  {
+    "question": "Net revenue retention compressed from 174% to 127% over eight quarters. How much of that decline is attributable to mid-market mix shift versus consumption deceleration among the top 100 accounts — and what is the NRR for the top 100 accounts specifically?",
+    "whyItMatters": "Mid-market mix shift is healthy in a maturing platform; deceleration among the largest accounts signals those buyers are optimizing spend, finding alternatives, or hitting workload ceilings.",
+    "redFlag": "Refusal to disclose cohort-level NRR. Every mature infrastructure company tracks this internally — if they will not share it, the top-account number is likely well below the blended figure they report."
+  },
+  {
+    "question": "What percentage of competitive deals in the last four quarters involved Databricks as the primary alternative, and in deals lost to Databricks, was the decision driven by price, performance on unstructured data workloads, or consolidation of analytics and ML under one vendor?",
+    "whyItMatters": "Losing on price is a margin compression story but manageable; losing because buyers want to unify analytics and ML pipelines on one platform is a structural convergence problem that does not resolve with better pricing.",
+    "redFlag": "Management says they do not see Databricks in most deals — that is either false or means the company is not competing for the workloads where the market is moving fastest."
+  }
+]
+
+SPECTRO CLOUD — questionsForManagement:
+[
+  {
+    "question": "Of production deployments running on the Spectro Cloud platform, what percentage manage clusters across two or more cloud providers versus single-cloud environments — and of the multi-cloud deployments, how many were multi-cloud from day one versus expanded from single-cloud post-adoption?",
+    "whyItMatters": "The entire value proposition rests on multi-cloud Kubernetes complexity. If most customers run single-cloud clusters, they could get equivalent management from Red Hat OpenShift or Rancher at lower cost with broader support ecosystems.",
+    "redFlag": "Management describes a land-with-single-cloud, expand-to-multi-cloud motion but cannot cite a specific percentage of customers who have actually completed that expansion in production — making the thesis aspirational rather than demonstrated."
+  },
+  {
+    "question": "When the company loses a competitive deal to Red Hat OpenShift or Rancher, what is the most frequently cited reason by the buyer — and in deals won against them, is the primary driver the declarative cluster profile approach, edge computing capabilities, or something else?",
+    "whyItMatters": "This reveals whether wins are driven by a specific architectural feature that competitors would need years to replicate, or by softer factors like pricing or timing that offer no durable advantage.",
+    "redFlag": "The answer is 'the platform experience is what differentiates us' — that is a marketing answer. If the team cannot name the specific technical feature that tips competitive evaluations, the differentiation may not exist at the engineering level."
+  },
+  {
+    "question": "The Kubernetes management layer is increasingly being absorbed into broader platform engineering tools — Humanitec, Backstage-based vendors, and the cloud providers' own managed Kubernetes services. How does the company avoid being squeezed between hyperscalers adding native management from below and developer portals abstracting it away from above?",
+    "whyItMatters": "Point solutions in infrastructure get compressed from both directions over a 3-5 year horizon — the question is about structural positioning, not current feature differentiation.",
+    "redFlag": "The answer focuses on current feature gaps without addressing the platform convergence trajectory — today's feature advantage is a 12-18 month lead at best."
+  }
+]
+
+DATADOG — questionsForManagement:
+[
+  {
+    "question": "What percentage of customers use three or more Datadog products, and for multi-product customers, how does retention rate and expansion rate compare to single-product customers in the same ACV cohort?",
+    "whyItMatters": "The bull case rests on cross-product data gravity — logs, metrics, traces, and security signals being more valuable when correlated in one platform. The adoption number alone does not prove the flywheel; what matters is whether multi-product customers show meaningfully higher retention.",
+    "redFlag": "Management cites multi-product adoption percentages but avoids disclosing the retention or expansion rate differential — if the delta is modest, each product is effectively a standalone point solution that happens to share a UI."
+  },
+  {
+    "question": "As the product expands into security — Cloud SIEM, Application Security — which is typically a top-down CISO purchase, how are win rates and deal cycles comparing to the infrastructure monitoring products, and is the security buyer the same person who adopted Datadog originally or a different budget owner?",
+    "whyItMatters": "If the security buyer is a different persona with a different budget, the company is building a second go-to-market motion from scratch, which is expensive and slow — the distribution advantage only transfers if the existing champion can pull security budget.",
+    "redFlag": "Management says 'security is our fastest-growing product' without addressing whether that growth comes through existing customer relationships or a parallel sales effort targeting a new buyer."
+  }
+]`;
+
+    return [
+      { role: 'system',    content: system },
+      { role: 'user',      content: fewShotUser },
+      { role: 'assistant', content: fewShotAssistant },
+      { role: 'user',      content: 'Now analyze this query and return the full JSON response: ' + query }
+    ];
+  }
+
+  // ── RENDER ─────────────────────────────────────────────────────────────────
+  function renderResults(query, d) {
+    hideSkeleton();
+    hideError();
+    resultsArea.classList.add('visible');
+    queryLabel.textContent = query;
+
+    // 1. Simple explanation
+    simpleText.textContent = d.simpleExplanation || '';
+
+    // 2. ELI12
+    eli12Text.textContent = d.eli12 || '';
+
+    // 3. Diagram
+    diagramCont.innerHTML = d.diagramHTML || '<p style="color:#9CA3AF;font-size:0.88rem;">No diagram available.</p>';
+
+    // 4. Analogies
+    analogiesList.innerHTML = '';
+    (d.analogies || []).forEach(a => {
+      const el = document.createElement('div');
+      el.className = 'analogy-item';
+      el.innerHTML = '<span class="analogy-emoji">💡</span><span>' + escHtml(a) + '</span>';
+      analogiesList.appendChild(el);
+    });
+
+    // 5. Enterprise
+    enterpriseText.textContent = d.enterpriseContext || '';
+
+    // 6. End users
+    endusersText.textContent = d.endUsers || '';
+
+    // 7. Historical
+    historyText.textContent = d.historicalContext || '';
+
+    // 8. Vendor landscape
+    tamText.textContent = d.tam || 'Not available';
+    vendorGrid.innerHTML = '';
+    (d.vendorLandscape || []).forEach(v => {
+      const isIncumbent = (v.type || '').toLowerCase().includes('incumbent');
+      const card = document.createElement('div');
+      card.className = 'vendor-card';
+      card.innerHTML =
+        '<div class="vendor-card-top">' +
+          '<div class="vendor-name">' + escHtml(v.name) + '</div>' +
+          '<span class="vendor-badge ' + (isIncumbent ? 'badge-incumbent' : 'badge-challenger') + '">' + (isIncumbent ? 'Incumbent' : 'Challenger') + '</span>' +
+        '</div>' +
+        '<div class="vendor-desc">' + escHtml(v.description) + '</div>' +
+        '<div class="vendor-stats">' +
+          (v.revenue    ? '<span class="vendor-stat"><strong>Rev:</strong> ' + escHtml(v.revenue) + '</span>' : '') +
+          (v.marketShare ? '<span class="vendor-stat"><strong>Share:</strong> ' + escHtml(v.marketShare) + '</span>' : '') +
+        '</div>';
+      vendorGrid.appendChild(card);
+    });
+
+    // 9. Software market analogy
+    const sma = d.softwareMarketAnalogy || {};
+    analogyMarket.textContent = (sma.analogousMarket || '') + ' Market';
+    analogyWhy.textContent = sma.whyComparison || '';
+    analogySimList.innerHTML = (sma.structuralSimilarities || []).map(s =>
+      '<div class="analogy-sim-item"><span class="analogy-sim-bullet">▸</span><span>' + escHtml(s) + '</span></div>'
+    ).join('');
+    const fw = sma.investorFramework || {};
+    const stickyRating = (fw.productStickiness || {}).rating || '';
+    const stickyClass = stickyRating.toLowerCase() === 'high' ? 'sticky-high' : stickyRating.toLowerCase() === 'low' ? 'sticky-low' : 'sticky-medium';
+    const fwRows = [
+      { dim: 'Product Stickiness', val: '<span class="sticky-badge ' + stickyClass + '">' + escHtml(stickyRating) + '</span>' + escHtml((fw.productStickiness || {}).explanation || '') },
+      { dim: 'Point vs. Platform', val: escHtml(fw.pointVsPlatform || '') },
+      { dim: 'Beachhead Potential', val: escHtml(fw.beachheadPotential || '') },
+      { dim: 'Margin Profile', val: escHtml(fw.marginProfile || '') },
+      { dim: 'Consolidation Risk', val: escHtml(fw.consolidationRisk || '') }
+    ];
+    analogyFwRows.innerHTML = fwRows.map(r =>
+      '<div class="framework-row"><div class="framework-dim">' + escHtml(r.dim) + '</div><div class="framework-val">' + r.val + '</div></div>'
+    ).join('');
+
+    // 10. Questions for management
+    questionsList.innerHTML = '';
+    (d.questionsForManagement || []).forEach((q, i) => {
+      const isObj = typeof q === 'object' && q !== null;
+      const question    = isObj ? (q.question    || '') : String(q);
+      const whyItMatters = isObj ? (q.whyItMatters || '') : '';
+      const redFlag      = isObj ? (q.redFlag      || '') : '';
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      card.innerHTML =
+        '<div class="question-card-main">' +
+          '<div class="question-num-row">' +
+            '<span class="question-num">' + (i + 1) + '.</span>' +
+            '<span class="question-text">' + escHtml(question) + '</span>' +
+          '</div>' +
+        '</div>' +
+        (whyItMatters ? '<div class="question-why">' + escHtml(whyItMatters) + '</div>' : '') +
+        (redFlag ? '<div class="question-redflag"><span class="redflag-icon">⚑</span><span>' + escHtml(redFlag) + '</span></div>' : '');
+      questionsList.appendChild(card);
+    });
+
+    // 11. Adjacent categories — use categoryName for center, vendors under each box
+    adjacentFlow.innerHTML = '';
+    const adj = d.adjacentCategories || {};
+    const upstream   = adj.upstream   || [];
+    const downstream = adj.downstream || [];
+    const centerLabel = d.categoryName || fallbackCategoryName(query);
+
+    if (upstream.length) {
+      const grp = document.createElement('div');
+      grp.className = 'adj-group';
+      grp.innerHTML = '<div class="adj-label">Upstream</div>' +
+        upstream.map(u => {
+          const name = typeof u === 'object' ? u.name : u;
+          const vendors = typeof u === 'object' && u.vendors ? u.vendors : [];
+          return '<div class="adj-box">' + escHtml(name) + '</div>' +
+            (vendors.length ? '<div class="adj-vendors">' + escHtml(vendors.join(', ')) + '</div>' : '');
+        }).join('');
+      adjacentFlow.appendChild(grp);
+      adjacentFlow.appendChild(makeArrow());
+    }
+
+    const center = document.createElement('div');
+    center.className = 'adj-group';
+    center.innerHTML = '<div class="adj-label">&nbsp;</div><div class="adj-center-box">' + escHtml(centerLabel) + '</div>';
+    adjacentFlow.appendChild(center);
+
+    if (downstream.length) {
+      adjacentFlow.appendChild(makeArrow());
+      const grp = document.createElement('div');
+      grp.className = 'adj-group';
+      grp.innerHTML = '<div class="adj-label">Downstream</div>' +
+        downstream.map(u => {
+          const name = typeof u === 'object' ? u.name : u;
+          const vendors = typeof u === 'object' && u.vendors ? u.vendors : [];
+          return '<div class="adj-box">' + escHtml(name) + '</div>' +
+            (vendors.length ? '<div class="adj-vendors">' + escHtml(vendors.join(', ')) + '</div>' : '');
+        }).join('');
+      adjacentFlow.appendChild(grp);
+    }
+
+    // Videos
+    videoList.innerHTML = '';
+    (d.youtubeVideos || []).forEach(v => {
+      const url = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(v.searchQuery || v.title);
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      card.innerHTML =
+        '<div class="video-title">' + escHtml(v.title) + '</div>' +
+        '<div class="video-channel">' + escHtml(v.channel) + '</div>' +
+        '<a class="video-link" href="' + url + '" target="_blank" rel="noopener">Search on YouTube &#8599;</a>';
+      videoList.appendChild(card);
+    });
+
+    resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── STATE HELPERS ──────────────────────────────────────────────────────────
+  function showSkeleton() { skeletonArea.classList.add('visible'); resultsArea.classList.remove('visible'); hideError(); }
+  function hideSkeleton()  { skeletonArea.classList.remove('visible'); }
+
+  function showError(title, body) {
+    hideSkeleton();
+    resultsArea.classList.remove('visible');
+    errorTitle.textContent = title;
+    errorBody.innerHTML = body;
+    errorBox.classList.add('visible');
+  }
+  function hideError() { errorBox.classList.remove('visible'); }
+
+  function showApiError(err) {
+    const s = err.status;
+    if (s === 429) showError('Rate limit reached', 'You\'ve hit the Groq API rate limit. Wait a moment and try again.');
+    else if (s === 401 || s === 403) showError('Authentication error', 'Your Groq API key appears to be invalid. Double-check your <code>config.js</code> file.');
+    else showError('Something went wrong', 'The API request failed. Check your internet connection and try again. (Error: ' + escHtml(err.message) + ')');
+  }
+
+  // ── UTILS ──────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function makeArrow() {
+    const s = document.createElement('span');
+    s.className = 'adj-arrow';
+    s.textContent = '→';
+    return s;
+  }
+
+  function fallbackCategoryName(query) {
+    return query.replace(/^(what\s+is\s+(a\s+|an\s+)?|what\s+does\s+|explain\s+(a\s+|an\s+)?|how\s+does\s+(a\s+|an\s+)?|define\s+(a\s+|an\s+)?)/i, '').replace(/\s+do\??$/i, '').replace(/\?$/, '').trim();
+  }
+
+})();
+</script>
+</body>
+</html>
